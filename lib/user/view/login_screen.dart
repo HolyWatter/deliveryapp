@@ -67,18 +67,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           Codec<String, String> stringToBase64 = utf8.fuse(base64);
                           String token = stringToBase64.encode(rawString);
-
                           final res = await dio.post('http://localhost:3000/auth/login', 
                           options :Options(
                             headers: {
                               'authorization' : 'Basic $token',
                             }
-                          ));
+                          )
+                          );
                           final refreshToken = res.data['refreshToken'];
                           final accessToken = res.data['accessToken'];
-
                           await storage.write(key: REFRESH_TOKEN_KEY, value: refreshToken);
-                          await storage.write(key: ACCESS_TOKEN_KEY, value: accessToken);
+                          await storage.write(key: ACCESS_TOKEN_KEY, value: accessToken);         
+              
+                          
 
                           Navigator.of(context).push(
                             MaterialPageRoute(
