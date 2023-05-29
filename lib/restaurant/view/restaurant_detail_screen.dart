@@ -1,9 +1,11 @@
 import 'package:delivery_app/common/const/colors.dart';
 import 'package:delivery_app/common/const/data.dart';
+import 'package:delivery_app/common/dio/dio.dart';
 import 'package:delivery_app/common/layout/default_layout.dart';
 import 'package:delivery_app/product/widget/product_card.dart';
 import 'package:delivery_app/restaurant/model/restaurant_detail_model.dart';
 import 'package:delivery_app/restaurant/model/restaurant_model.dart';
+import 'package:delivery_app/restaurant/repository/restaurant_repository.dart';
 import 'package:delivery_app/restaurant/widget/restaurant_card.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -15,42 +17,36 @@ class RestaurantDetailScreen extends StatelessWidget {
   
   const RestaurantDetailScreen({super.key, required this.pItem, required this.id});
 
-  Future<Map<String, dynamic>> getDetail() async{
-    final token = await storage.read(key: ACCESS_TOKEN_KEY);
+  Future<RestaurantDetailModel> getRestaurantDetail() async{
     final dio = Dio();
 
-    final detailRes = await dio.get('http://localhost:3000/restaurant/$id',
+    dio.interceptors.add(
+      CustomInterceptor(storage: storage),
+    );
 
-    options: Options(
-      headers: {
-        'authorization' : 'Bearer $token'
-      }
-    ));
+    final repository = RestaurantRepository(dio, baseUrl: 'http://localhost:3000/restaurant');
 
-  return detailRes.data;
+    return repository.getRestaurantDetail(id: id);
   }
 
   @override
   Widget build(BuildContext context) {
     return DefaultLayout(
       title: pItem.name,
-      child: FutureBuilder<Map<String, dynamic>>(
-        future: getDetail(),
-        builder: (_, AsyncSnapshot<Map<String , dynamic>> snapshot) {
+      child: FutureBuilder<RestaurantDetailModel>(
+        future: getRestaurantDetail(),
+        builder: (_, AsyncSnapshot<RestaurantDetailModel> snapshot) {
           if(!snapshot.hasData){
             return const Center(
               child: CircularProgressIndicator(),
             );
           }
-          final item = RestaurantDetailModel.fromJson(
-            json : snapshot.data!
-          );
             return CustomScrollView(
         slivers: [
-          renderTop(model: item),
-          renderDetail(model: item),
+          renderTop(model: snapshot.data!),
+          renderDetail(model: snapshot.data!),
           renderLabel(),
-          renderProduct()
+          renderProduct(model: snapshot.data!)
         ],
       );
 
@@ -95,11 +91,13 @@ SliverToBoxAdapter renderLabel () {
   ),);
 }
 
- SliverList renderProduct(){
+ SliverList renderProduct({
+  required RestaurantDetailModel model
+ }){
   return SliverList(
     delegate : SliverChildBuilderDelegate((context, index){
-      return const ProductCard();
+      return ProductCard(product : model.products[index]);
     },
-    childCount: 10,)
+    childCount: model.products.length,)
   );
 }

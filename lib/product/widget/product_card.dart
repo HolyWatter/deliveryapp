@@ -1,8 +1,10 @@
 import 'package:delivery_app/common/const/colors.dart';
+import 'package:delivery_app/product/model/product_model.dart';
 import 'package:flutter/material.dart';
 
 class ProductCard extends StatelessWidget {
-  const ProductCard({super.key});
+  final  ProductModel product;
+  const ProductCard({super.key, required this.product});
 
   @override
   Widget build(BuildContext context) {
@@ -13,8 +15,8 @@ class ProductCard extends StatelessWidget {
           children: [
              ClipRRect(
               borderRadius : BorderRadius.circular(10),
-               child: Image.asset(
-                  'asset/img/food/ddeok_bok_gi.jpg',
+               child: Image.network(
+                  'http://localhost:3000/${product.imgUrl}',
                 width: 110,
                 height: 110,
                 fit: BoxFit.cover,
@@ -25,22 +27,22 @@ class ProductCard extends StatelessWidget {
                 Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: const [
-                    Text("asd",
-                    style: TextStyle(
+                  children: [
+                    Text(product.name,
+                    style: const TextStyle(
                      fontSize: 16,
                      fontWeight: FontWeight.w500 
                     ),),
-                    Text("내용들어갑니다. 내용들어갑니다. 내용들어갑니다. 내용들어갑니다. 내용들어갑니다.",
+                     Text(product.detail,
                     overflow: TextOverflow.ellipsis,
                     maxLines: 2,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 14,
                       color: BDOY_TEXT_COLOR
                     ),
                     ),
-                    Text("₩ 10000",
-                    style: TextStyle(
+                     Text('₩ ${product.price}',
+                    style: const TextStyle(
                       fontSize: 12.0,
                       color: PRIMARY_COLOR,
                       fontWeight: FontWeight.w600

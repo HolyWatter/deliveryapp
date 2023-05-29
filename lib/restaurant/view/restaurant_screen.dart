@@ -1,4 +1,5 @@
 import 'package:delivery_app/common/const/data.dart';
+import 'package:delivery_app/common/dio/dio.dart';
 import 'package:delivery_app/restaurant/model/restaurant_model.dart';
 import 'package:delivery_app/restaurant/view/restaurant_detail_screen.dart';
 import 'package:delivery_app/restaurant/widget/restaurant_card.dart';
@@ -19,16 +20,13 @@ class _RestaurantScreenState extends State<RestaurantScreen> {
 
   @override
   Future<List> paginateRestaurant ()async {
-    final accessToken = await storage.read(key: ACCESS_TOKEN_KEY);
 
-    final foodRes = await dio.get(
-      'http://localhost:3000/restaurant?after=0&count=4',
-   options: Options(
-      headers: {
-        'authorization' : 'Bearer $accessToken',
-      }
-    ));
-    return foodRes.data['data'];
+    final dio = Dio();
+
+    dio.interceptors.add(
+      CustomInterceptor(storage: storage),
+    );
+   
   }
 
   @override
@@ -53,7 +51,7 @@ class _RestaurantScreenState extends State<RestaurantScreen> {
                 },
                 itemBuilder: (_, index){
                   final item = snapshot.data![index];
-                  final pItem = RestaurantModel.fromJson(json : item);
+                  final pItem = RestaurantModel.fromJson(item);
                   return GestureDetector(
                     onTap: (){
                       Navigator.of(context).push(
