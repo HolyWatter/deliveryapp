@@ -1,3 +1,4 @@
+import 'package:delivery_app/common/model/cursor_pagination_model.dart';
 import 'package:delivery_app/restaurant/model/restaurant_detail_model.dart';
 import 'package:delivery_app/restaurant/model/restaurant_model.dart';
 import 'package:dio/dio.dart' hide Headers;
@@ -14,7 +15,7 @@ abstract class RestaurantRepository  {
   @Headers({
     'accessToken' : 'true'
   })
-  Future<RestaurantModel> paginate();
+  Future<CursorPagination<RestaurantModel>> paginate();
 
   @GET('/{id}')
   @Headers({
