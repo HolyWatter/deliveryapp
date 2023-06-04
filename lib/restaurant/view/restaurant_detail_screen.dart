@@ -1,40 +1,26 @@
 import 'package:delivery_app/common/const/colors.dart';
-import 'package:delivery_app/common/const/data.dart';
-import 'package:delivery_app/common/dio/dio.dart';
 import 'package:delivery_app/common/layout/default_layout.dart';
 import 'package:delivery_app/product/widget/product_card.dart';
 import 'package:delivery_app/restaurant/model/restaurant_detail_model.dart';
 import 'package:delivery_app/restaurant/model/restaurant_model.dart';
 import 'package:delivery_app/restaurant/repository/restaurant_repository.dart';
 import 'package:delivery_app/restaurant/widget/restaurant_card.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class RestaurantDetailScreen extends StatelessWidget {
+class RestaurantDetailScreen extends ConsumerWidget {
   final String id;
 
   final RestaurantModel pItem;
   
   const RestaurantDetailScreen({super.key, required this.pItem, required this.id});
 
-  Future<RestaurantDetailModel> getRestaurantDetail() async{
-    final dio = Dio();
-
-    dio.interceptors.add(
-      CustomInterceptor(storage: storage),
-    );
-
-    final repository = RestaurantRepository(dio, baseUrl: 'http://localhost:3000/restaurant');
-
-    return repository.getRestaurantDetail(id: id);
-  }
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return DefaultLayout(
       title: pItem.name,
       child: FutureBuilder<RestaurantDetailModel>(
-        future: getRestaurantDetail(),
+        future: ref.watch(restaurantRepositoryProvider).getRestaurantDetail(id: id),
         builder: (_, AsyncSnapshot<RestaurantDetailModel> snapshot) {
           if(!snapshot.hasData){
             return const Center(

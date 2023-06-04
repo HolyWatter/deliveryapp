@@ -1,73 +1,86 @@
-import 'package:delivery_app/common/const/data.dart';
-import 'package:delivery_app/common/dio/dio.dart';
-import 'package:delivery_app/restaurant/model/restaurant_model.dart';
-import 'package:delivery_app/restaurant/repository/restaurant_repository.dart';
+import 'package:delivery_app/common/model/cursor_pagination_model.dart';
+import 'package:delivery_app/restaurant/provider/restaurant_provider.dart';
 import 'package:delivery_app/restaurant/view/restaurant_detail_screen.dart';
 import 'package:delivery_app/restaurant/widget/restaurant_card.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class RestaurantScreen extends StatefulWidget {
+class RestaurantScreen extends ConsumerStatefulWidget {
   const RestaurantScreen({super.key});
 
-  
-
   @override
-  State<RestaurantScreen> createState() => _RestaurantScreenState();
+  ConsumerState<RestaurantScreen> createState() => _RestaurantScreenState();
 }
 
-class _RestaurantScreenState extends State<RestaurantScreen> {
-    final dio = Dio();
+class _RestaurantScreenState extends ConsumerState<RestaurantScreen> {
+  final ScrollController controller = ScrollController();
 
   @override
-  Future<List<RestaurantModel>> paginateRestaurant ()async {
-    final dio = Dio();
+  void initState() {
+    super.initState();
 
-    dio.interceptors.add(
-      CustomInterceptor(storage: storage),
+    controller.addListener(scrollListener);
+  }
+
+  void scrollListener () {
+    if(controller.offset > controller.position.maxScrollExtent - 300){
+      ref.read(restaurantProvider.notifier).paginate(
+      fetchMore: true
     );
-
-    final resp = await RestaurantRepository(dio, baseUrl: 'http://localhost:3000/restaurant').paginate();
-
-    return resp.data;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: Center(
-        child : Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15),
-          child: FutureBuilder<List<RestaurantModel>>(
-            future: paginateRestaurant(),
-            builder: (context, AsyncSnapshot<List> snapshot){
-              if(!snapshot.hasData){
-                return Container();
+    final data = ref.watch(restaurantProvider);
+
+    // 완전 처음 로딩일 때
+    if(data is CursorPaginationLoading){
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    // 에러
+    if(data is CursorPaginationError){
+      return Center(
+        child: Text(data.message),
+      );
+    }
+    // CursorPagination
+    // CursorPaginationFetchingMore
+    // CursorPaginationRefetching
+
+
+
+    final cp = data as CursorPagination;
+
+    return  Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 15),
+      child: ListView.separated(
+            controller: controller,
+            itemCount: cp.data.length +1,
+            separatorBuilder: (context, index) {
+              return const SizedBox(
+                height: 14,
+              );
+            },
+            itemBuilder: (_, index){
+              if(index == cp.data.length){
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Center(child: data is CursorPaginationFetchingMore ? const CircularProgressIndicator() : const Text("데이터가 없습니다. ㅜㅜ") ));
               }
 
-              return ListView.separated(
-                itemCount: snapshot.data!.length,
-                separatorBuilder: (context, index) {
-                  return const SizedBox(
-                    height: 14,
-                  );
+              final pItem = cp.data[index];
+              
+              return GestureDetector(
+                onTap: (){
+                  Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_)=> RestaurantDetailScreen(pItem: pItem, id : pItem.id))
+                );
                 },
-                itemBuilder: (_, index){
-                  final pItem = snapshot.data![index];
-                  
-                  return GestureDetector(
-                    onTap: (){
-                      Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_)=> RestaurantDetailScreen(pItem: pItem, id : pItem.id))
-                    );
-                    },
-                    child: RestuarantCard.fromModel(model : pItem));
-                },
-              );
-            }
-          ),
-        )
-      ),
+                child: RestuarantCard.fromModel(model : pItem));
+            },
+          )
     );
   }
 }

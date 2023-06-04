@@ -1,8 +1,20 @@
-
-
 import 'package:delivery_app/common/const/data.dart';
+import 'package:delivery_app/common/secure_storage/secure_storage.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+final dioProvider = Provider<Dio>((ref){
+  final dio = Dio();
+
+  final storage = ref.watch(secureStorageProvider);
+
+  dio.interceptors.add(
+    CustomInterceptor(storage: storage)
+  );
+
+  return dio;
+});
 
 class CustomInterceptor extends Interceptor{
   final FlutterSecureStorage storage;
@@ -33,10 +45,16 @@ class CustomInterceptor extends Interceptor{
         'authorization' : 'Bearer $token'
       });
     }
+    print('[${options.method}] ${options.uri}');
     return super.onRequest(options, handler);
   }
 // 2. 응답.
+  @override
+  void onResponse(Response response, ResponseInterceptorHandler handler) {
+    print(response.data);
 
+    return super.onResponse(response, handler);
+  }
 // 3. 에러   
 
   @override
