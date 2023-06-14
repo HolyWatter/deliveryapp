@@ -14,7 +14,7 @@ final restuarantRatingRepositoryProvider =
   final dio = ref.watch(dioProvider);
 
   return RestaurantRatingRepository(dio,
-      baseUrl: 'http://localhost/restaurant/$id/ration');
+      baseUrl: 'http://localhost:3000/restaurant/$id/rating');
 });
 
 @RestApi()
