@@ -1,6 +1,7 @@
 import 'package:delivery_app/common/dio/dio.dart';
 import 'package:delivery_app/common/model/cursor_pagination_model.dart';
 import 'package:delivery_app/common/model/pagination_params.dart';
+import 'package:delivery_app/common/respository/base_pagination_repository.dart';
 import 'package:delivery_app/restaurant/model/restaurant_detail_model.dart';
 import 'package:delivery_app/restaurant/model/restaurant_model.dart';
 import 'package:dio/dio.dart' hide Headers;
@@ -12,27 +13,28 @@ part 'restaurant_repository.g.dart';
 final restaurantRepositoryProvider = Provider<RestaurantRepository>((ref) {
   final dio = ref.watch(dioProvider);
 
-  final repository = RestaurantRepository(dio, baseUrl: "http://localhost:3000/restaurant");
+  final repository =
+      RestaurantRepository(dio, baseUrl: "http://localhost:3000/restaurant");
 
   return repository;
 });
 
 @RestApi()
-abstract class RestaurantRepository  {
-  factory RestaurantRepository(Dio dio, {String baseUrl})
-  = _RestaurantRepository;
-  
+abstract class RestaurantRepository
+    implements IBasePaginationRepository<RestaurantModel> {
+  factory RestaurantRepository(Dio dio, {String baseUrl}) =
+      _RestaurantRepository;
+
+  @override
   @GET('/')
-  @Headers({
-    'accessToken' : 'true'
-  })
-  Future<CursorPagination<RestaurantModel>> paginate({
-    @Queries() PaginationParams? paginationParams = const PaginationParams()
-  });
+  @Headers({'accessToken': 'true'})
+  Future<CursorPagination<RestaurantModel>> paginate(
+      {@Queries()
+          PaginationParams? paginationParams = const PaginationParams()});
 
   @GET('/{id}')
   @Headers({
-    'accessToken' : 'true',
+    'accessToken': 'true',
   })
   Future<RestaurantDetailModel> getRestaurantDetail({
     @Path() required String id,
