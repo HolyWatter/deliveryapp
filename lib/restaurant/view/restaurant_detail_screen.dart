@@ -1,7 +1,10 @@
 import 'package:delivery_app/common/const/colors.dart';
 import 'package:delivery_app/common/layout/default_layout.dart';
+import 'package:delivery_app/common/model/cursor_pagination_model.dart';
+import 'package:delivery_app/common/utils/pagination_utils.dart';
 import 'package:delivery_app/product/widget/product_card.dart';
 import 'package:delivery_app/rating/component/rating_card.dart';
+import 'package:delivery_app/rating/model/rating_model.dart';
 import 'package:delivery_app/rating/provider/rating_provier.dart';
 import 'package:delivery_app/restaurant/model/restaurant_detail_model.dart';
 import 'package:delivery_app/restaurant/model/restaurant_model.dart';
@@ -24,19 +27,30 @@ class RestaurantDetailScreen extends ConsumerStatefulWidget {
 
 class _RestaurantDetailScreenState
     extends ConsumerState<RestaurantDetailScreen> {
+  final ScrollController controller = ScrollController();
+
   @override
   void initState() {
     super.initState();
 
     ref.read(restaurantProvider.notifier).getDetail(id: widget.id);
+
+    controller.addListener(listener);
+  }
+
+  void listener() {
+    PaginationUtils.paginate(
+      controller: controller,
+      provider: ref.read(
+        restaurantRatingProvider(widget.id).notifier,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(restaurantDetailProvider(widget.id));
     final ratingsState = ref.watch(restaurantRatingProvider(widget.id));
-
-    print(ratingsState);
 
     if (state == null) {
       return const DefaultLayout(
@@ -48,27 +62,28 @@ class _RestaurantDetailScreenState
     return DefaultLayout(
         title: widget.pItem.name,
         child: CustomScrollView(
+          controller: controller,
           slivers: [
             renderTop(model: state),
             if (state is! RestaurantDetailModel) renderLoading(),
             if (state is RestaurantDetailModel) renderDetail(model: state),
             if (state is RestaurantDetailModel) renderLabel(),
             if (state is RestaurantDetailModel) renderProduct(model: state),
-            const SliverPadding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0),
-              sliver: SliverToBoxAdapter(
-                child: RatingCard(
-                  rating: 4,
-                  email: 'asd@naver.com',
-                  images: [],
-                  avartarImage:
-                      AssetImage('asset/img/logo/codefactory_logo.png'),
-                  content: '맛좋다. 맛좋다. 맛좋다맛좋다. 맛좋다. 맛좋다맛좋다맛좋다맛좋다맛좋다',
-                ),
-              ),
-            )
+            if (ratingsState is CursorPagination<RatingModel>)
+              renderRatings(models: ratingsState.data)
           ],
         ));
+  }
+
+  SliverPadding renderRatings({required List<RatingModel> models}) {
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+            (context, index) => RatingCard.fromModel(model: models[index]),
+            childCount: models.length),
+      ),
+    );
   }
 
   SliverPadding renderLoading() {
